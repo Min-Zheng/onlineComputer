@@ -130,12 +130,8 @@ matrix div(matrix m1, matrix m2)
     return tmp;
 }
 
-matrix s_add(std::string s1, std::string s2)
-{
 
-}
-
-
+//拆分字符串为 矩阵，操作符
 void read_data(std::string line, matrix &m1, char &c, matrix &m2)
 {
     int start = 0;
@@ -200,7 +196,7 @@ void read_data(std::string line, matrix &m1, char &c, matrix &m2)
                             int k = m1.size();
                             if (row != k-1){
                                 row++;
-                                m1.push_back(m1[row]);
+                                //                                m1.push_back(m1[row]);
                             }
 
                             j = 0;
@@ -226,7 +222,7 @@ void read_data(std::string line, matrix &m1, char &c, matrix &m2)
                 end = end + 1;
 
                 if (line[i] == '#'){
-                    m2.push_back(m2[row]);
+                    //                    m2.push_back(m2[row]);
                     row++;
                     j = 0;
                 }
@@ -253,11 +249,50 @@ matrix calculate(matrix m1, char c, matrix m2)
 std::string chage(matrix m)
 {
     std::string res;
-    for (int i = 0; i != m.size(); i++){
-        for (int j = 0;j != m[0].size();j++){
-            res += std::to_string(m[i][j])+',';
+    for (int i = 0; i < m.size(); i++){
+        for (int j = 0;j < m[i].size();j++){
+            if (j < m[i].size() -1)
+                res += std::to_string(m[i][j])+',';
+            else {
+                res += std::to_string(m[i][j])+'#';
+            }
         }
-        res += '#';
     }
     return res;
+}
+
+void getRC(std::string tmp, int &m1_r, int &m1_c, int &m2_r, int &m2_c)
+{
+    int c_loc = 0;
+    for (int i = 0; i < tmp.size();i++){
+        if (!c_loc){
+            if (!isalnum(tmp[i])){
+                if (tmp[i] == ','){
+                    if (m1_r == 0)
+                        m1_c++;
+                }
+                else if (tmp[i] == '#'){
+                    if (m1_r == 0)
+                        m1_c++;
+                    m1_r++;
+                }
+                else{
+                    c_loc = i;
+                }
+            }
+        }else{
+            if (!isalnum(tmp[i])){
+                if (tmp[i] == ','){
+                    if (m2_r == 0)
+                        m2_c++;
+                }
+                if (tmp[i] == '#'){
+                    if (m2_r == 0)
+                        m2_c++;
+                    m2_r++;
+                }
+            }
+        }
+    }
+    m2_r++;
 }

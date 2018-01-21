@@ -26,12 +26,27 @@ void client_session(socket_ptr sock)
 
     while(true)
     {
-        std::cout << 2 <<endl;
-        matrix m1;
-        matrix m2;
-        char c;
+
         len = sock->read_some(buffer(data), ec);
+        if(ec)
+        {
+            std::cout << boost::system::system_error(ec).what() << std::endl;
+            break;
+        }
+
+        char c;
+        int m1_r = 0;
+        int m1_c = 0;
+        int m2_r = 0;
+        int m2_c = 0;
+
         string tmp = data;
+
+        getRC(tmp,m1_r,m1_c,m2_r,m2_c);
+
+
+        matrix m1(m1_r, std::vector<double>(m1_c));
+        matrix m2(m2_r, std::vector<double>(m2_c));
         cout << tmp << endl;
         read_data(tmp,m1,c,m2);
         matrix res = calculate(m1,c,m2);
@@ -39,11 +54,6 @@ void client_session(socket_ptr sock)
         std::stringstream input(ss);
         input >> data;
 
-        if(ec)
-        {
-            std::cout << boost::system::system_error(ec).what() << std::endl;
-            break;
-        }
 
         len = sock->write_some(buffer(data), ec);  //客户输入的消息，重新写到客户端
         if(ec)
@@ -65,55 +75,7 @@ int main()
 
 //    matrix m1;
 //    matrix m2;
-    char c;
-    int m1_r = 0;
-    int m1_c = 0;
-    int m2_r = 0;
-    int m2_c = 0;
-    int c_loc = 0;
 
-    string tmp = "1,2,3#,4,5,6#+4,5,6#1,3,5";
-    for (int i = 0; i < tmp.size();i++){
-        if (!c_loc){
-            if (!isalnum(tmp[i])){
-                if (tmp[i] == ','){
-                    if (m1_r == 0)
-                    m1_c++;
-                }
-                else if (tmp[i] == '#'){
-                    if (m1_r == 0)
-                        m1_c++;
-                    m1_r++;
-                }
-                else{
-                    c_loc = i;
-                }
-            }
-        }else{
-            if (!isalnum(tmp[i])){
-                if (tmp[i] == ','){
-                    if (m2_r == 0)
-                    m2_c++;
-                }
-                if (tmp[i] == '#'){
-                    if (m2_r == 0)
-                        m2_c++;
-                    m2_r++;
-                }
-            }
-        }
-    }
-    m2_r++;
-
-
-    matrix m1(m1_r, std::vector<double>(m1_c));
-    matrix m2(m2_r, std::vector<double>(m2_c));
-    cout << tmp << endl;
-    read_data(tmp,m1,c,m2);
-    matrix res = calculate(m1,c,m2);
-    string ss = chage(res);
-    std::stringstream input(ss);
-    input >> data;
 
     while(true){
         socket_ptr sock(new ip::tcp::socket(service));

@@ -13,6 +13,7 @@ using std::cout;                using std::endl;
 using namespace boost::asio;    using std::vector;
 using std::string;
 
+
 boost::asio::io_service service;
 boost::asio::ip::tcp::socket sock(service);
 
@@ -46,13 +47,13 @@ Calculation::Calculation(QDialog *parent) :
     service.run();
 
 
-    Login login(this);
     connect(m_ui->loginButton,&QPushButton::clicked,this,&Calculation::login_clicked);
     connect(m_ui->recordButton,&QPushButton::clicked,this,&Calculation::recordButtonClicked);
     connect(m_ui->okButton,&QPushButton::clicked,this,&Calculation::okBUttonClocked);
-    if(login.m_logIn == true){
+    connect(this,&Calculation::authorityError,this,&Calculation::onAuthorityError);
+    if(m_isLogIn == true){
         m_ui->loginButton->setText("Log Out");
-        m_isLogIn = true;
+        m_ui->recordButton->setEnabled(true);
     }
 }
 
@@ -65,16 +66,24 @@ void Calculation::clientTransmit()
 {
     boost::system::error_code ec;
     size_t len;
-
+    char data[512];
+//    string stl;
 
     //发送 如果不传入 ec(error_code)参数，则出错时会抛出异常，此时可以用try-catch进行捕获，如果也没捕获，程序会直接终止
     len = sock.write_some(buffer(this->m_p), ec);
     if(ec)
         std::cout << boost::system::system_error(ec).what() << std::endl;
 
+    //du
+    len = sock.read_some(buffer(data),ec);
+    if(ec)
+        std::cout << boost::system::system_error(ec).what() << std::endl;
+    string str = string(data);
+    ServiceSplit(str);
+
 }
 
-void Calculation::deleteSpace(std::string line)
+void Calculation::deleteSpace(std::string &line)
 {
     bool flag = false;
     for (auto it = line.begin(); it != line.end(); it++)
@@ -97,15 +106,33 @@ void Calculation::deleteSpace(std::string line)
             flag = true;
         }
     }
-//    strcpy(m_p,line);
+    //    strcpy(m_p,line);
 
+}
+
+void Calculation::ServiceSplit(std::string &line)
+{
+    bool flag = false;
+    for(auto it = line.begin(); it != line.end(); it++)
+    {
+        if(*it == ','){
+            *it = ' ';
+        }else if(*it == '#')
+            *it = '\n';
+    }
+
+    auto s = QString::fromStdString(line);
+    m_ui->resultTextEdit->setText(s);
 }
 
 void Calculation::login_clicked()
 {
-    Login login(this);
-    login.show();
-    login.exec();
+    Login log(this);
+    log.show();
+    log.exec();
+
+    if(log.m_logIn == true)
+        m_isLogIn = true;
 }
 
 void Calculation::closeButtonClicked()
@@ -125,37 +152,37 @@ void Calculation::split(string str)
     int p2_lie = 0;
 
     //规定只能一个数字接一个空格的输入
-    for(int i = 0; i < str.size();i++){
-        if(str[i] == ' '){
-            data[i] = ',';
-            if(j == 0 && p1_lie < 1)
+    for(int i = 0; i < rel.size();i++){
+        if(rel[i] == ','){
+            data[i] = rel[i];
+            if(j == 0 && p1_hang < 1)
                 p1_lie++;
-            else if(j ==  1 && p2_lie < 1)
+            else if(j ==  1 && p2_hang < 1)
                 p2_lie++;
-        }else if(str[i] =='\n'){
+        }else if(rel[i] =='\n'){
             data[i] = '#';
             if(j == 0)
                 p1_hang++;
             else
                 p2_hang++;
-        }else if(str[i] == '+'||str[i] == '-'||str[i] == '*'||str[i] == '/'){
-            data[i] = str[i];
+        }else if(rel[i] == '+'||rel[i] == '-'||rel[i] == '*'||rel[i] == '/'){
+            data[i] = rel[i];
             j = 1;
         }
         else{
-            data[i] = str[i];
+            data[i] = rel[i];
         }
     }
 
-    p1_lie = ((p1_lie/2) * 3)/p1_hang;
-    p2_lie = ((p2_lie/2) * 3)/p2_hang;
-    if(p1_hang > 5 && p1_lie > 5){
+    p1_lie++;
+    p2_lie++;
+    if(p1_hang >= 5 && p1_lie >= 5){
         if(m_isLogIn == false){
             emit authorityError();
             m_isAuthorityError = true;
         }
     }
-    else if(p2_hang > 5 && p2_lie > 5){
+    else if(p2_hang >= 5 && p2_lie >= 5){
         if(m_isLogIn == false){
             emit authorityError();
             m_isAuthorityError = true;
@@ -192,28 +219,25 @@ void Calculation::okBUttonClocked()
     auto operatorNumber = ostr.toStdString();
 
 
-//    deleteSpace(p1);
-//    deleteSpace(p2);
-//    split(p1 + operatorNumber+ p2);
+    //    deleteSpace(p1);
+    //    deleteSpace(p2);
+    //    split(p1 + operatorNumber+ p2);
     //    boost::thread(client);
-    deleteSpace(p1 + operatorNumber+ p2);
-    if(m_isAuthorityError == false)
+    split(p1 + operatorNumber+ p2);
+    if(m_isAuthorityError == false || m_isLogIn == true)
         clientTransmit();
+
 }
 
 void Calculation::recordButtonClicked()
 {
-    m_ui->recordlist->isVisible();
-    if(m_ui->recordlist->isVisible())
-        m_ui->recordlist->setVisible(false);
-    else
-        m_ui->recordlist->setVisible(true);
+
+    m_ui->recordlist->setVisible(!m_ui->recordlist->isVisible());
 }
 
 void Calculation::onAuthorityError()
 {
-    m_ui->okButton->setEnabled(false);
-    emit m_ui->loginButton->clicked();
+    this->login_clicked();
 }
 
 

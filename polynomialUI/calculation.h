@@ -2,6 +2,7 @@
 #define CALCULATION_H
 
 #include <QDialog>
+#include "login.h"
 
 namespace Ui {
 class Calculation;
@@ -16,8 +17,10 @@ public:
     ~Calculation();
 
     char m_p[512];
+    bool m_isLogIn = false;
     void clientTransmit();
-    void deleteSpace(std::string line);
+    void deleteSpace(std::string &line);
+    void ServiceSplit(std::string &line);
     bool isLogIn(){
         return m_isLogIn;
     }
@@ -34,9 +37,9 @@ private slots:
 
 private:
     Ui::Calculation *m_ui;
-    bool m_isLogIn = false;
     bool m_isAuthorityError = false;
     void split(std::string str);
+//    Login m_log;
 };
 
 #endif // CALCULATION_H

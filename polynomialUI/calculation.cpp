@@ -22,7 +22,7 @@ Calculation::Calculation(QDialog *parent) :
     m_ui(new Ui::Calculation)
 {
     m_ui->setupUi(this);
-    m_ui->recordlist->hide();
+    m_ui->recordTextEdit_2->hide();
     if(m_isLogIn == false)
         m_ui->recordButton->setEnabled(false);
 
@@ -51,10 +51,7 @@ Calculation::Calculation(QDialog *parent) :
     connect(m_ui->recordButton,&QPushButton::clicked,this,&Calculation::recordButtonClicked);
     connect(m_ui->okButton,&QPushButton::clicked,this,&Calculation::okBUttonClocked);
     connect(this,&Calculation::authorityError,this,&Calculation::onAuthorityError);
-    if(m_isLogIn == true){
-        m_ui->loginButton->setText("Log Out");
-        m_ui->recordButton->setEnabled(true);
-    }
+
 }
 
 Calculation::~Calculation()
@@ -67,7 +64,7 @@ void Calculation::clientTransmit()
     boost::system::error_code ec;
     size_t len;
     char data[512];
-//    string stl;
+    //    string stl;
 
     //发送 如果不传入 ec(error_code)参数，则出错时会抛出异常，此时可以用try-catch进行捕获，如果也没捕获，程序会直接终止
     len = sock.write_some(buffer(this->m_p), ec);
@@ -127,13 +124,24 @@ void Calculation::ServiceSplit(std::string &line)
 
 void Calculation::login_clicked()
 {
-    Login log(this);
-    log.show();
-    log.exec();
+    if(m_isLogIn == false){
+        Login log(this);
+        log.show();
+        log.exec();
 
-    if(log.m_logIn == true)
-        m_isLogIn = true;
+        if(log.m_logIn == true){
+            m_isLogIn = true;
+            m_ui->loginButton->setText("Log out");
+            m_ui->recordButton->setEnabled(true);
+        }
+    }else if(m_isLogIn == true){
+        m_ui->loginButton->setText("Log in");
+        m_isLogIn = false;
+        m_ui->recordButton->setEnabled(false);
+        m_ui->recordTextEdit_2->hide();
+    }
 }
+
 
 void Calculation::closeButtonClicked()
 {
@@ -176,13 +184,13 @@ void Calculation::split(string str)
 
     p1_lie++;
     p2_lie++;
-    if(p1_hang >= 5 && p1_lie >= 5){
+    if(p1_hang >= 30 && p1_lie >= 30){
         if(m_isLogIn == false){
             emit authorityError();
             m_isAuthorityError = true;
         }
     }
-    else if(p2_hang >= 5 && p2_lie >= 5){
+    else if(p2_hang >= 30 && p2_lie >= 30){
         if(m_isLogIn == false){
             emit authorityError();
             m_isAuthorityError = true;
@@ -218,21 +226,20 @@ void Calculation::okBUttonClocked()
     auto ostr = m_ui->operator1->currentText();
     auto operatorNumber = ostr.toStdString();
 
-
-    //    deleteSpace(p1);
-    //    deleteSpace(p2);
-    //    split(p1 + operatorNumber+ p2);
-    //    boost::thread(client);
-    split(p1 + operatorNumber+ p2);
-    if(m_isAuthorityError == false || m_isLogIn == true)
-        clientTransmit();
+    if(p1 !="" && p2 != ""){
+        split(p1 + operatorNumber+ p2);
+        if(m_isAuthorityError == false || m_isLogIn == true)
+//            boost::thread(clientTransmit);
+            clientTransmit();
+    }
+    //        clientTransmit();
 
 }
 
 void Calculation::recordButtonClicked()
 {
 
-    m_ui->recordlist->setVisible(!m_ui->recordlist->isVisible());
+    m_ui->recordTextEdit_2->setVisible(!m_ui->recordTextEdit_2->isVisible());
 }
 
 void Calculation::onAuthorityError()

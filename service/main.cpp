@@ -19,13 +19,14 @@ void client_session(socket_ptr sock)
     auto ep = sock->remote_endpoint();//
     std::cout<<ep.address().to_string()<<"连接"<<std::endl;
 
-    char data[512];
     //    string data;
     boost::system::error_code ec;
     size_t len;
+    string enterError;
 
     while(true)
     {
+        char data[512];
 
         len = sock->read_some(buffer(data), ec);
         if(ec)
@@ -49,11 +50,17 @@ void client_session(socket_ptr sock)
         matrix m2(m2_r, std::vector<double>(m2_c));
         cout << tmp << endl;
         read_data(tmp,m1,c,m2);
-        matrix res = calculate(m1,c,m2);
-        string ss = chage(res);
-        std::stringstream input(ss);
-        input >> data;
-
+        matrix res;
+        try{
+            res = calculate(m1,c,m2);
+            string ss = chage(res);
+            std::stringstream input(ss);
+            input >> data;
+        }catch(const char *str){
+            enterError = str;
+            std::stringstream in(enterError);
+            in >> data;
+        }
 
         len = sock->write_some(buffer(data), ec);  //客户输入的消息，重新写到客户端
         if(ec)
@@ -73,8 +80,8 @@ int main()
     ip::tcp::endpoint ep(ip::tcp::v4(),2001);  //监听端口
     ip::tcp::acceptor acc(service,ep); //创建连接器
 
-//    matrix m1;
-//    matrix m2;
+    //    matrix m1;
+    //    matrix m2;
 
 
     while(true){

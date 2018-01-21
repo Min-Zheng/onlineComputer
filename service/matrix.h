@@ -5,7 +5,6 @@
 #include <iostream>
 #include<string>
 
-
 typedef std::vector<std::vector<double>> matrix;
 
 void read_data(std::string line, matrix &m1, char &c, matrix &m2);//拆分客户端字符串为 矩阵，操作符

@@ -3,10 +3,13 @@
 #include <cctype>
 #include <sstream>
 
+using std::stringstream;
+
+
 matrix add(matrix m1, matrix m2)
 {
-    if (m1.size() != m2.size() && m1[0].size() != m2[0].size())
-        throw "can't calculate\n";
+    if (m1.size() != m2.size() || m1[0].size() != m2[0].size())
+        throw "Invalid-matrix\n";
     matrix *m = new matrix(m1);
     for (int i = 0; i != m1.size(); i++)
         for (int j = 0;j != m1[0].size();j++)
@@ -18,7 +21,7 @@ matrix add(matrix m1, matrix m2)
 matrix sub(matrix m1, matrix m2)
 {
     if (m1.size() != m2.size() || m1[0].size() != m2[0].size())
-        throw "can't calculate\n";
+        throw "Invalid-matrix\n";
     matrix *m = new matrix(m1);
     for (int i = 0; i != m1.size(); i++)
         for (int j = 0;j != m1[0].size();j++)
@@ -39,7 +42,7 @@ matrix sub(matrix m1, matrix m2)
 matrix mul(matrix m1, matrix m2)
 {
     if (m1[0].size() != m2.size())
-        throw "can't calculate\n";
+        throw "Invalid-matrix\n";
     double sum = 0.0;
     matrix *m = new matrix(m1.size(), std::vector<double>(m2[0].size()));
     for (int i = 0; i != m1.size(); i++)
@@ -58,8 +61,9 @@ matrix mul(matrix m1, matrix m2)
 
 double getDet(matrix m, int order)
 {
-    if (m.size() != m[0].size())
-        throw "The number of rows is not equal. Can't calculate!\n";
+    if (m[0].size() != m[0].size()){
+        throw "Invalid-matrix\n";
+    }
     if (order == 1)
         return m[0][0];
     double res = 0;
@@ -81,8 +85,9 @@ double getDet(matrix m, int order)
 
 matrix getAdjointMatrix(matrix m, int order)
 {
-    if (m.size() != m[0].size())
-        throw "The number of rows is not equal. Can't calculate!\n";
+    if (m.size() != m[0].size()){
+        throw "Invalid-matrix";
+    }
     matrix *res = new matrix(m.size(), std::vector<double>(m[0].size()));
     matrix *tmp = new matrix(m.size(), std::vector<double>(m[0].size()));
     if (order == 1){
@@ -113,7 +118,7 @@ matrix getInv(matrix m)
     matrix *tmp = new matrix(m.size(), std::vector<double>(m[0].size()));
     matrix *res = new matrix(m.size(), std::vector<double>(m[0].size()));
     if (d == 0)
-        throw "can't calculate!\n";
+        throw "Invalid-matrix\n";
     else{
         (*tmp) = getAdjointMatrix(m,m.size());
         for (int i = 0; i < m.size(); i++)
@@ -207,7 +212,7 @@ void read_data(std::string line, matrix &m1, char &c, matrix &m2)
         }else{
             if (isalnum(line[i]))
                 end++;
-            else{
+            else if(line[i] == '#' ||line[i] == ','){
 
                 std::string s("s",end-start);
                 for(int j = 0; j != end-start; j++)
@@ -218,8 +223,10 @@ void read_data(std::string line, matrix &m1, char &c, matrix &m2)
                 double d;
                 input >> d;
                 m2[row][j++] = d;
+
                 start = end + 1;
-                end = end + 1;
+                if(end + 1 != line.size())
+                    end = end + 1;
 
                 if (line[i] == '#'){
                     //                    m2.push_back(m2[row]);
@@ -261,38 +268,70 @@ std::string chage(matrix m)
     return res;
 }
 
+
 void getRC(std::string tmp, int &m1_r, int &m1_c, int &m2_r, int &m2_c)
 {
-    int c_loc = 0;
-    for (int i = 0; i < tmp.size();i++){
-        if (!c_loc){
-            if (!isalnum(tmp[i])){
-                if (tmp[i] == ','){
-                    if (m1_r == 0)
-                        m1_c++;
-                }
-                else if (tmp[i] == '#'){
-                    if (m1_r == 0)
-                        m1_c++;
-                    m1_r++;
-                }
-                else{
-                    c_loc = i;
-                }
-            }
-        }else{
-            if (!isalnum(tmp[i])){
-                if (tmp[i] == ','){
-                    if (m2_r == 0)
-                        m2_c++;
-                }
-                if (tmp[i] == '#'){
-                    if (m2_r == 0)
-                        m2_c++;
-                    m2_r++;
-                }
-            }
+    auto rel{tmp};
+    int j = 0;
+    int p1_hang = 0;
+    int p1_lie = 0;
+    int p2_hang = 0;
+    int p2_lie = 0;
+
+    //规定只能一个数字接一个空格的输入
+    for(int i = 0; i < rel.size();i++){
+        if(rel[i] == ','){
+            if(j == 0 && p1_hang < 1)
+                p1_lie++;
+            else if(j ==  1 && p2_hang < 1)
+                p2_lie++;
+        }else if(rel[i] =='#'){
+            if(j == 0)
+                p1_hang++;
+            else
+                p2_hang++;
+        }else if(rel[i] == '+'||rel[i] == '-'||rel[i] == '*'||rel[i] == '/'){
+            j = 1;
         }
     }
-    m2_r++;
+    m1_r = p1_hang;
+    m1_c = p1_lie + 1;
+    m2_r = p2_hang;
+    m2_c = p2_lie + 1;
 }
+
+//void getRC(std::string tmp, int &m1_r, int &m1_c, int &m2_r, int &m2_c)
+//{
+//    int c_loc = 0;
+//    for (int i = 0; i < tmp.size();i++){
+//        if (!c_loc){
+//            if (!isalnum(tmp[i])){
+//                if (tmp[i] == ','){
+//                    if (m1_r == 0)
+//                        m1_c++;
+//                }
+//                else if (tmp[i] == '#'){
+//                    if (m1_r == 0)
+//                        m1_c++;
+//                    m1_r++;
+//                }
+//                else{
+//                    c_loc = i;
+//                }
+//            }
+//        }else{
+//            if (!isalnum(tmp[i])){
+//                if (tmp[i] == ','){
+//                    if (m2_r == 0)
+//                        m2_c++;
+//                }
+//                if (tmp[i] == '#'){
+//                    if (m2_r == 0)
+//                        m2_c++;
+//                    m2_r++;
+//                }
+//            }
+//        }
+//    }
+//    m2_r++;
+//}

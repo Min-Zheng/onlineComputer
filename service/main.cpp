@@ -22,11 +22,11 @@ void client_session(socket_ptr sock)
     //    string data;
     boost::system::error_code ec;
     size_t len;
-    string enterError;
 
     while(true)
     {
         char data[512];
+        string enterError;
 
         len = sock->read_some(buffer(data), ec);
         if(ec)

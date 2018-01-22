@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QtSql>
 #include "login.h"
-
+extern QString username;
 namespace Ui {
 class Register;
 }

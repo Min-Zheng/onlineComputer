@@ -20,10 +20,17 @@ Register::~Register()
 }
 
 QString select_table = "select tbl_name name from sqlite_master where type = 'table'";
+//创建用户数据表
 QString create_sql = "create table user (chatid int primary key, passwd varchar(30), name varchar(30), history int)";
 QString select_max_sql = "select max(chatid) from user";
 QString insert_sql = "insert into user values (?, ?, ?, ?)";
 QString select_sql = "select name from user";
+
+//创建查询数据表
+QString create_sql1 = "create table record (name varchar(30), hrecord TEXT)";
+//QString insert_sql1 = "insert into user values (?, ?)";
+//QString select_sql1 = "select name from user";
+
 
 //chatid,passwd,name
 void Register::dboperation()

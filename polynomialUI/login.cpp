@@ -11,7 +11,8 @@ Login::Login(QDialog *parent) :
     connect(m_ui->loginBtn,&QPushButton::clicked,this,&Login::login_clicked);
     connect(m_ui->nameCmBox,&QLineEdit::textChanged,this,&Login::getUserInfo);
 
-    tableFlag=false;
+    usrtableFlag=false;
+    rectableFlag = false;
 
     database = QSqlDatabase::addDatabase("QSQLITE");
     database.setDatabaseName("database.db");
@@ -42,18 +43,29 @@ Login::Login(QDialog *parent) :
                 qDebug()<<tableName;
                 if(tableName.compare("user"))
                 {
-                    tableFlag=false;
-                    qDebug()<<"table is not exist";
+                    usrtableFlag=false;
+                    qDebug()<<"user table is not exist";
                 }
                 else
                 {
-                    tableFlag=true;
-                    qDebug()<<"table is exist";
+                    usrtableFlag=true;
+                    qDebug()<<"user table is exist";
+                }
+
+                if(tableName.compare("record"))
+                {
+                    rectableFlag=false;
+                    qDebug()<<"record table is not exist";
+                }
+                else
+                {
+                    rectableFlag=true;
+                    qDebug()<<"record table is exist";
                 }
             }
         }
 
-        if(tableFlag==false)
+        if(usrtableFlag==false)
         {
             sql_query.prepare(create_sql);
             if(!sql_query.exec())
@@ -67,6 +79,17 @@ Login::Login(QDialog *parent) :
         }
 
         //database.close();
+        if (rectableFlag == false){
+            sql_query.prepare(create_sql1);
+            if(!sql_query.exec())
+            {
+                qDebug()<<sql_query.lastError();
+            }
+            else
+            {
+                qDebug()<<"table created!";
+            }
+        }
     }
 }
 
@@ -131,7 +154,7 @@ void Login::getUserInfo(QString name)
             usr_id = sql_query.value(0).toInt();
             usr_passwd = sql_query.value(1).toString();
             usr_name = sql_query.value(2).toString();
-//            usr_email = sql_query.value(3).toString();
+            //            usr_email = sql_query.value(3).toString();
             usr_history = sql_query.value(4).toInt();
 
             qDebug()<<QString("chatid=%1    passwd=%2     name=%3    history=%4").arg(usr_id).arg(usr_passwd).arg(usr_name).arg(usr_history);

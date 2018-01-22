@@ -20,7 +20,11 @@
       <widget class="QLineEdit" name="nameCmBox"/>
      </item>
      <item>
-      <widget class="QLineEdit" name="passwdLineEdit"/>
+      <widget class="QLineEdit" name="passwdLineEdit">
+       <property name="echoMode">
+        <enum>QLineEdit::Password</enum>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

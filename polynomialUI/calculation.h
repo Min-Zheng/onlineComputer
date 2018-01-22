@@ -2,6 +2,7 @@
 #define CALCULATION_H
 
 #include <QDialog>
+#include <QtSql>
 #include "login.h"
 
 namespace Ui {
@@ -18,6 +19,12 @@ public:
 
     char m_p[512];
     bool m_isLogIn = false;
+    std::string m_record;
+    QString rec_name;
+    QString rec_record;
+
+    QSqlDatabase database;
+
     void clientTransmit();
     void deleteSpace(std::string &line);
     void ServiceSplit(std::string &line);

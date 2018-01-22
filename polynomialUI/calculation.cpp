@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <string>
+#include <cctype>
 #include <boost/asio.hpp>
 #include <iostream>
 #include <boost/system/error_code.hpp>
@@ -16,6 +17,8 @@ using std::string;
 
 boost::asio::io_service service;
 boost::asio::ip::tcp::socket sock(service);
+
+QString insert_sql1 = "insert into record values (?, ?)";
 
 Calculation::Calculation(QDialog *parent) :
     QDialog(parent),
@@ -76,7 +79,95 @@ void Calculation::clientTransmit()
     if(ec)
         std::cout << boost::system::system_error(ec).what() << std::endl;
     string str = string(data);
+    string rec = string(m_p);
+    for (auto i = rec.end()-1; i != rec.begin(); i--){
+        if (*i != '#'){
+            i = rec.erase(i);
+        }else if(*i == '#')
+            break;
+    }
+    m_record =  rec+ '=' +'#' + str;
+    m_record.push_back(',');
+    m_record.push_back('#');
+    for (auto it = m_record.begin(); it != m_record.end(); it++){
+        if (*it == '+'){
+            it = m_record.insert(it+1,'#');
+            break;
+        }
+        if (*it == '-'){
+            it = m_record.insert(it+1,'#');
+            break;
+        }
+        if (*it == '*'){
+            it = m_record.insert(it+1,'#');
+            break;
+        }
+        if (*it =='/'){
+            it = m_record.insert(it+1,'#');
+            break;
+        }
+    }
+
     ServiceSplit(str);
+
+    for(auto it = m_record.begin(); it != m_record.end(); it++)
+    {
+        if(*it == ','){
+            *it = ' ';
+        }else if(*it == '#')
+            *it = '\n';
+    }
+
+    auto s = QString::fromStdString(m_record);
+
+    if (m_isLogIn){
+
+        database = QSqlDatabase::addDatabase("QSQLITE");
+        database.setDatabaseName("database.db");
+
+
+        //打开数据库
+        if(!database.open())
+        {
+            qDebug()<<database.lastError();
+            qFatal("failed to connect.") ;
+        }
+        else
+        {
+            qDebug()<<"open seccess";
+            //以下为数据库的操作
+            QSqlQuery sql_query;
+            QString tempstring="select * from user where name='"+rec_name+"'";
+
+            qDebug()<<tempstring;
+            if(!sql_query.exec(tempstring))
+            {
+                qDebug()<<sql_query.lastError();
+                qDebug()<< "The user is not exist.";
+            }
+            else
+            {
+                while(sql_query.next())
+                {
+                    rec_name = sql_query.value(2).toString();
+
+                }
+            }
+            QString sss= "the is";
+            sql_query.prepare(insert_sql1);
+            sql_query.addBindValue(rec_name);
+            sql_query.addBindValue(s);
+
+            if(!sql_query.exec())
+            {
+                qDebug()<<sql_query.lastError();
+            }
+            else
+            {
+                qDebug()<<"record inserted!";
+            }
+        }
+    }
 
 }
 
@@ -130,6 +221,7 @@ void Calculation::login_clicked()
         log.exec();
 
         if(log.m_logIn == true){
+            rec_name =  log.usr_name;
             m_isLogIn = true;
             m_ui->loginButton->setText("Log out");
             m_ui->recordButton->setEnabled(true);
@@ -229,17 +321,49 @@ void Calculation::okBUttonClocked()
     if(p1 !="" && p2 != ""){
         split(p1 + operatorNumber+ p2);
         if(m_isAuthorityError == false || m_isLogIn == true)
-//            boost::thread(clientTransmit);
+            //            boost::thread(clientTransmit);
             clientTransmit();
     }
-    //        clientTransmit();
-
 }
 
 void Calculation::recordButtonClicked()
 {
 
     m_ui->recordTextEdit_2->setVisible(!m_ui->recordTextEdit_2->isVisible());
+    database = QSqlDatabase::addDatabase("QSQLITE");
+    database.setDatabaseName("database.db");
+
+
+    //打开数据库
+    if(!database.open())
+    {
+        qDebug()<<database.lastError();
+        qFatal("failed to connect.") ;
+    }
+    else
+    {
+        qDebug()<<"open seccess";
+        //以下为数据库的操作
+        QSqlQuery sql_query;
+        QString tempstring="select * from record where name='"+rec_name+"'";
+
+        qDebug()<<tempstring;
+        if(!sql_query.exec(tempstring))
+        {
+            qDebug()<<sql_query.lastError();
+            qDebug()<< "The user is not exist.";
+        }
+        else
+        {
+            while(sql_query.next())
+            {
+                rec_record += sql_query.value(1).toString();
+
+            }
+        }
+    }
+
+    m_ui->recordTextEdit_2->setText(rec_record);
 }
 
 void Calculation::onAuthorityError()
